@@ -16,15 +16,33 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # Use Docker Hub image (kivy/buildozer) as root to avoid user/chown issues
-      - name: Build APK with Docker (root)
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install system dependencies
         run: |
-          docker run --rm \
-            -e BUILDOZER_WARN_ON_ROOT=1 \
-            -v "$PWD":/work \
-            -w /work \
-            docker.io/kivy/buildozer:latest \
-            buildozer android debug
+          sudo apt-get update
+          sudo apt-get install -y \
+            openjdk-17-jdk zip unzip \
+            libffi-dev libssl-dev libsqlite3-dev zlib1g-dev \
+            libjpeg-dev libfreetype6-dev \
+            autoconf automake libtool pkg-config \
+            build-essential python3-dev
+
+      - name: Install Buildozer (no Docker)
+        run: |
+          python -m pip install --upgrade pip
+          # Pin Cython < 3 for maximum compatibility with python-for-android
+          pip install "cython<3" buildozer
+
+      - name: Build debug APK
+        env:
+          # Avoid interactive prompts
+          BUILDOZER_WARN_ON_ROOT: "0"
+        run: |
+          buildozer android debug
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
