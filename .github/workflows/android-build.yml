@@ -16,6 +16,15 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Android SDK (cmdline-tools)
+        uses: android-actions/setup-android@v3
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -25,21 +34,35 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y \
-            openjdk-17-jdk zip unzip \
+            zip unzip \
             libffi-dev libssl-dev libsqlite3-dev zlib1g-dev \
             libjpeg-dev libfreetype6-dev \
             autoconf automake libtool pkg-config \
             build-essential python3-dev
 
-      - name: Install Buildozer (no Docker)
+      - name: Install Buildozer
         run: |
           python -m pip install --upgrade pip
-          # Pin Cython < 3 for maximum compatibility with python-for-android
           pip install "cython<3" buildozer
+
+      - name: Accept Android licenses and install SDK/NDK components
+        env:
+          ANDROID_SDK_ROOT: ${{ env.ANDROID_SDK_ROOT }}
+          ANDROID_HOME: ${{ env.ANDROID_HOME }}
+        run: |
+          yes | sdkmanager --licenses
+          sdkmanager --install \
+            "platform-tools" \
+            "platforms;android-33" \
+            "build-tools;33.0.2" \
+            "ndk;25.2.9519653"
 
       - name: Build debug APK
         env:
-          # Avoid interactive prompts
+          ANDROID_SDK_ROOT: ${{ env.ANDROID_SDK_ROOT }}
+          ANDROID_HOME: ${{ env.ANDROID_HOME }}
+          ANDROIDSDK: ${{ env.ANDROID_SDK_ROOT }}
+          ANDROIDNDK: ${{ env.ANDROID_SDK_ROOT }}/ndk/25.2.9519653
           BUILDOZER_WARN_ON_ROOT: "0"
         run: |
           buildozer android debug
