@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Spider Follow</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      background: #000;
+    }
+  </style>
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<script>
+// Canvas setup
+const canvas = document.getElementById("c");
+const ctx = canvas.getContext("2d");
+
+function resize() {
+  canvas.width = innerWidth;
+  canvas.height = innerHeight;
+}
+resize();
+addEventListener("resize", resize);
+
+// Spider class
+class Spider {
+  constructor() {
+    this.x = Math.random() * innerWidth;
+    this.y = Math.random() * innerHeight;
+    this.speed = 0.05;  
+  }
+
+  follow(mx, my) {
+    this.tx = mx;
+    this.ty = my;
+  }
+
+  tick() {
+    if (this.tx != null) {
+      this.x += (this.tx - this.x) * this.speed;
+      this.y += (this.ty - this.y) * this.speed;
+    }
+
+    ctx.fillStyle = "#fff";
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, 8, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+// Create 2 spiders
+const spiders = [new Spider(), new Spider()];
+
+// Mouse movement
+addEventListener("pointermove", (e) => {
+  spiders.forEach(s => s.follow(e.clientX, e.clientY));
+});
+
+// Animation loop
+function anim() {
+  ctx.fillStyle = "#000";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  spiders.forEach(s => s.tick());
+
+  requestAnimationFrame(anim);
+}
+anim();
+</script>
+
+</body>
+</html>
